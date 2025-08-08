@@ -1,13 +1,14 @@
 /* eslint-disable @nx/enforce-module-boundaries */
 // nx-ignore-next-line
+import { ProjectGraph } from '@nx/devkit';
+import type { AppConfig, ExternalApi } from '@nx/graph/shared';
 import type {
   ExpandedTaskInputsReponse,
   ProjectGraphClientResponse,
 } from 'nx/src/command-line/graph/graph';
-import type { AppConfig, ExternalApi } from '@nx/graph/shared';
+import { Interpreter } from 'xstate';
 import {
   ProjectDetailsEvents,
-  projectDetailsMachine,
   ProjectDetailsState,
 } from './app/console/project-details/project-details.machine';
 import { Interpreter } from 'xstate';
@@ -38,24 +39,19 @@ export declare global {
     ) => Interpreter<MigrateState, any, MigrateEvents>;
 
     // New graph rendering functions
-    renderProjectGraph?: (projectData: any) => {
-      service: Interpreter<any, any, any>;
-      send: (event: any) => any;
-      receive: (callback: (event: any) => void) => void;
-      on: (eventType: string, callback: Function) => () => void;
-      emit: (eventType: string, data?: any) => void;
-      getState: () => any;
-      getGraphClient: () => any;
-    };
-    renderTaskGraph?: (taskData: any) => {
-      service: Interpreter<any, any, any>;
-      send: (event: any) => any;
-      receive: (callback: (event: any) => void) => void;
-      on: (eventType: string, callback: Function) => () => void;
-      emit: (eventType: string, data?: any) => void;
-      getState: () => any;
-      getGraphClient: () => any;
-    };
+    renderProjectGraph?: (
+      projectGraph: ProjectGraph
+    ) => Interpreter<ProjectGraphState, any, ProjectGraphEvents>;
+
+    // renderTaskGraph?: (taskData: any) => {
+    //   service: Interpreter<any, any, any>;
+    //   send: (event: any) => any;
+    //   receive: (callback: (event: any) => void) => void;
+    //   on: (eventType: string, callback: Function) => () => void;
+    //   emit: (eventType: string, data?: any) => void;
+    //   getState: () => any;
+    //   getGraphClient: () => any;
+    // };
   }
 }
 declare module 'cytoscape' {
