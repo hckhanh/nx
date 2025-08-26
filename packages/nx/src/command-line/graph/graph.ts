@@ -57,6 +57,7 @@ import { ConfigurationSourceMaps } from '../../project-graph/utils/project-confi
 import { createTaskHasher } from '../../hasher/create-task-hasher';
 import { ProjectGraphError } from '../../project-graph/error-types';
 import { isNxCloudUsed } from '../../utils/nx-cloud-utils';
+import { createTaskGraphForTargetsAndProjects as createTaskGraphForTargetsAndProjectsInner } from './create-task-graph-for-targets-and-projects';
 
 export interface GraphError {
   message: string;
@@ -1085,76 +1086,13 @@ async function createTaskGraphForTargetsAndProjects(
   }
   const nxJson = readNxJson();
 
-  performance.mark(`task graph generation:start`);
-
-  let projectsToUse: string[];
-  if (projectNames && projectNames.length > 0) {
-    projectsToUse = projectNames;
-  } else {
-    // Get all projects that have at least one of the targets
-    projectsToUse = Object.entries(graph.nodes)
-      .filter(([_, project]) =>
-        targetNames.some((targetName) => project.data.targets?.[targetName])
-      )
-      .map(([projectName]) => projectName);
-  }
-
-  try {
-    // Create single task graph
-    const taskGraph = createTaskGraph(
-      graph,
-      {},
-      projectsToUse,
-      targetNames,
-      configuration,
-      {}
-    );
-
-    performance.mark(`task graph generation:end`);
-
-    const planner = new HashPlanner(
-      nxJson,
-      transferProjectGraph(transformProjectGraphForRust(graph))
-    );
-    performance.mark('task hash plan generation:start');
-
-    const taskIds = Object.keys(taskGraph.tasks);
-    const plans =
-      taskIds.length > 0 ? planner.getPlans(taskIds, taskGraph) : {};
-
-    performance.mark('task hash plan generation:end');
-
-    performance.measure(
-      `task graph generation for ${targetNames.join(', ')}`,
-      `task graph generation:start`,
-      `task graph generation:end`
-    );
-    performance.measure(
-      'task hash plan generation',
-      'task hash plan generation:start',
-      'task hash plan generation:end'
-    );
-
-    return { taskGraph, plans, error: null };
-  } catch (err) {
-    performance.mark(`task graph generation:end`);
-    performance.measure(
-      `task graph generation for ${targetNames.join(', ')} (failed)`,
-      `task graph generation:start`,
-      `task graph generation:end`
-    );
-
-    return {
-      taskGraph: {
-        tasks: {},
-        dependencies: {},
-        continuousDependencies: {},
-        roots: [],
-      },
-      plans: {},
-      error: err.message,
-    };
-  }
+  return await createTaskGraphForTargetsAndProjectsInner(
+    graph,
+    nxJson,
+    targetNames,
+    projectNames,
+    configuration
+  );
 }
 
 async function getExpandedTaskInputs(

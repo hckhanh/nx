@@ -1,45 +1,48 @@
-import { ProjectGraph } from '@nx/devkit';
-import { ActorRef, assign, send, spawn, createMachine } from 'xstate';
-import { ProjectGraphClientActor } from '../feature-projects/machines/interfaces';
-import { graphClientActor } from '../feature-projects/machines/graph.actor';
-import {
-  ProjectGraphEvent,
-  ProjectGraphEventType,
-} from '@nx/graph/projects/project-graph-event';
+import { ProjectGraph, TaskGraph } from '@nx/devkit';
 import { RenderGraphConfigEvent } from '@nx/graph';
+import { TaskGraphHandleEventResult } from '@nx/graph/tasks/task-graph-client';
+import { TaskGraphEvent } from '@nx/graph/tasks/task-graph-event';
+import { ActorRef, assign, createMachine, send, spawn } from 'xstate';
 import { GRAPH_CLIENT_EVENTS } from '../feature-projects/machines/project-graph.machine';
-import { ProjectGraphHandleEventResult } from '@nx/graph/projects/project-graph-client';
+import {
+  graphClientActor,
+  TASK_GRAPH_EVENTS,
+} from '../feature-tasks/graph.actor';
+import { TaskGraphClientActor } from '../feature-tasks/interfaces';
 
-export interface ProjectGraphStateMachineContext {
+export interface TaskGraphStateMachineContext {
   projectGraph: null | ProjectGraph;
-  graphActor: ActorRef<ProjectGraphEvent | RenderGraphConfigEvent>;
-  handleEventResult: ProjectGraphHandleEventResult | null;
+  taskGraph: null | TaskGraph;
+  graphActor: ActorRef<TaskGraphEvent | RenderGraphConfigEvent>;
+  handleEventResult: TaskGraphHandleEventResult | null;
 }
 
-const initialContext: ProjectGraphStateMachineContext = {
+const initialContext: TaskGraphStateMachineContext = {
   projectGraph: null,
+  taskGraph: null,
   graphActor: null,
   handleEventResult: null,
 };
-export type ProjectGraphStateMachineEvents =
+export type TaskGraphStateMachineEvents =
   | {
       type: 'loadData';
       projectGraph: ProjectGraph;
+      taskGraph: TaskGraph;
     }
   | {
       type: 'setGraphClient';
-      graphClient: ProjectGraphClientActor;
+      graphClient: TaskGraphClientActor;
     }
   | {
       type: 'handleEventResult';
-      result: ProjectGraphHandleEventResult;
+      result: TaskGraphHandleEventResult;
     };
-export const projectGraphMachine = createMachine<
-  ProjectGraphStateMachineContext,
-  ProjectGraphStateMachineEvents
+export const taskGraphMachine = createMachine<
+  TaskGraphStateMachineContext,
+  TaskGraphStateMachineEvents
 >(
   {
-    id: 'projectGraph',
+    id: 'taskGraph',
     initial: 'idle',
     context: initialContext,
     states: {
@@ -53,6 +56,7 @@ export const projectGraphMachine = createMachine<
           actions: [
             assign({
               projectGraph: (_, event) => event.projectGraph,
+              taskGraph: (_, event) => event.taskGraph,
             }),
           ],
         },
@@ -63,7 +67,7 @@ export const projectGraphMachine = createMachine<
             graphActor: (_, event) =>
               spawn(
                 graphClientActor(event.graphClient),
-                'projectGraphClientActor'
+                'taskGraphClientActor'
               ),
           }),
         ],
@@ -84,7 +88,7 @@ export const projectGraphMachine = createMachine<
   {
     guards: {
       isGraphClientEvent: (ctx, event) => {
-        return GRAPH_CLIENT_EVENTS.has(event.type) && ctx.graphActor !== null;
+        return TASK_GRAPH_EVENTS.has(event.type) && ctx.graphActor !== null;
       },
     },
     actions: {

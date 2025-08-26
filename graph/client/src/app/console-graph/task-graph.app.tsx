@@ -1,24 +1,24 @@
-import { useProjectGraphClient } from '@nx/graph/projects';
-import { useSelector } from '@xstate/react';
-import { useEffect } from 'react';
-import { Interpreter } from 'xstate';
-import {
-  ProjectGraphStateMachineEvents,
-  ProjectGraphStateMachineContext,
-} from './project-graph.machine';
 import {
   NxGraphContextMenu,
   useGraphContextMenu,
 } from '@nx/graph/context-menu';
+import { useTaskGraphClient } from '@nx/graph/tasks';
+import { useSelector } from '@xstate/react';
 import { Tag } from '@nx/graph-ui-common';
+import { useEffect } from 'react';
+import { Interpreter } from 'xstate';
+import {
+  TaskGraphStateMachineContext,
+  TaskGraphStateMachineEvents,
+} from './task-graph.machine';
 
-export function ProjectGraphApp({
+export function TaskGraphApp({
   service,
 }: {
   service: Interpreter<
-    ProjectGraphStateMachineContext,
+    TaskGraphStateMachineContext,
     any,
-    ProjectGraphStateMachineEvents
+    TaskGraphStateMachineEvents
   >;
 }) {
   const {
@@ -27,7 +27,7 @@ export function ProjectGraphApp({
     sendRenderConfigEvent,
     send,
     handleEventResult,
-  } = useProjectGraphClient({
+  } = useTaskGraphClient({
     renderPlatform: 'nx-console',
     styles: [],
   });
@@ -40,14 +40,20 @@ export function ProjectGraphApp({
     (state) => state.context.projectGraph
   );
 
+  const taskGraph = useSelector(service, (state) => state.context.taskGraph);
+
   useEffect(() => {
     if (!graphClient) return;
+
+    console.log('init graph calling with', {
+      projects: Object.values(projectGraph.nodes),
+      taskGraph,
+    });
 
     send({
       type: 'initGraph',
       projects: Object.values(projectGraph.nodes),
-      dependencies: projectGraph.dependencies,
-      affectedProjects: [],
+      taskGraph,
     });
     console.log('initGraph called');
 
