@@ -1834,7 +1834,7 @@ const docsToAstroRedirects = {
 
   // ============= SHOWCASE =============
   // We removed these outdated showcase pages, but some have moved to reference (e.g. benchmarks)
-  '/showcase': '/docs/getting-started/into',
+  '/showcase': '/docs/getting-started/intro',
   '/showcase/example-repos': '/docs/getting-started/into',
   '/showcase/example-repos/add-express': '/docs/getting-started/into',
   '/showcase/example-repos/add-lit': '/docs/getting-started/into',
